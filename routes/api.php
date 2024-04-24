@@ -26,7 +26,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::get('/users', [UserController::class, 'list']);
 
 
-Route::get('/audit/{branch}', [AuditController::class, 'audit']);
+Route::get('/averageSalesPerCustomer',[AuditController::class, 'averageSalesPerCustomer']);av
 
 
 Route::get('/branch', [BranchController::class, 'branchList']);
