@@ -61,6 +61,49 @@ class ItemSalesController extends Controller
         ]);
     }
 
+    public function ProductMix(Request $request)
+    {
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $branch = $request->input('branch');
+        $category = $request->input('category');
+    
+        // Perform the query using Eloquent
+        $productMix = dr_item_sales::select(
+                'dr_item_sales.category_code',
+                'dr_category.category_desc',
+                'dr_item_sales.product_code',
+                'dr_item_sales.description',
+                DB::raw('SUM(dr_item_sales.quantity) as total_quantity'),
+                DB::raw('SUM(dr_item_sales.net_sales) as total_net_sales')
+            )
+            ->join('dr_category', 'dr_category.category_code', '=', 'dr_item_sales.category_code')
+            ->whereBetween('date', [$startDate, $endDate])
+            ->groupBy('dr_item_sales.category_code', 'dr_item_sales.product_code');// Corrected groupBy
 
+            if($branch !== 'ALL' && !is_null($branch)){
+                $productMix->where('branch', $branch);
+            }
+
+            if($category !== 'ALL' && !is_null($category)){
+                $productMix->where('dr_category.category_code', $category);
+            }
+            
+            $results = $productMix->get();
+
+            $data = [];
+
+            foreach($results as $result){
+                $data[] = [
+                    'category_code' => $result->category_code,
+                    'category_desc' => $result->category_desc,
+                    'product_code' => $result->product_code,
+                    'description' => $result->description,
+                    'total_quantity' => $result->total_quantity,
+                    'total_net_sales' => $result->total_net_sales,
+                ];
+            }
+            return response()->json($data);
+    }
     
 }

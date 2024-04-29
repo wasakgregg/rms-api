@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ConceptController;
 use App\Http\Controllers\HeaderController;
 use App\Http\Controllers\ItemSalesController;
 use App\Http\Controllers\PaymentDetailsController;
@@ -24,6 +26,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::get('/conceptlist', [ConceptController::class, 'ConceptList']);
+
 Route::get('/users', [UserController::class, 'list']);
 
 
@@ -45,3 +49,14 @@ Route::get('/totalSalesPerDay', [HeaderController::class, 'TotalSalesPerDay']);
 //payment details api
 
 Route::get('/paymentDetails', [PaymentDetailsController::class,'PaymentDetails']);
+
+
+//category report
+Route::get('/productMix',[ItemSalesController::class,'ProductMix']);
+
+
+
+
+//category list
+
+Route::get('/categorylist', [CategoryController::class, 'categoryList']);
