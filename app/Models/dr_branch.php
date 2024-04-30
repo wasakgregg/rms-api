@@ -7,6 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class dr_branch extends Model
 {
-    protected $table = 'dr_branches';
+    protected $table = 'dr_branch';
     use HasFactory;
 }

@@ -7,6 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class dr_header extends Model
 {
-    protected $table = 'dr_headers';
+    protected $table = 'dr_header';
     use HasFactory;
 }

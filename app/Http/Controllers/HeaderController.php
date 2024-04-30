@@ -13,15 +13,27 @@ class HeaderController extends Controller
 
         $month = $request->input('month');
         $branch = $request->input('branch');
+        $concept = $request->input('concept');
     
         $query = dr_header::query();
-    
+
+        if($concept != "ALL"){
         $baseQuery = $query->selectRaw('SUM(no_transaction) as averageTx')
-            ->whereRaw('date_format(date, "%Y-%m") = ?', [$month]);
-    
-        if($branch !== 'ALL' && !is_null($branch)){
-            $baseQuery->where('branch', $branch);
+        ->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
+        ->where('concept_id', $concept);
+
+            if($branch !== 'ALL' && !is_null($branch)){
+                $baseQuery->where('branch', $branch);
         }
+        }else{
+        $baseQuery = $query->selectRaw('SUM(no_transaction) as averageTx')
+        ->whereRaw('date_format(date, "%Y-%m") = ?', [$month]);
+
+            if($branch !== 'ALL' && !is_null($branch)){
+                $baseQuery->where('branch', $branch);
+            }
+        }
+    
     
         $daysInMonth = (int)date('t', strtotime($month));
     
@@ -36,16 +48,29 @@ class HeaderController extends Controller
     public function TotalSalesPerDay(Request $request) {
         $month = $request->input('month');
         $branch = $request->input('branch');
+        $concept = $request->input('concept');
 
         $query = dr_header::query();
 
+       if($concept != "ALL"){
         $baseQuery = $query->selectRaw('SUM(end_balance - beg_balance) as total_sales, date')
-                            ->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
-                            ->groupBy('date');
+        ->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
+        ->where('concept_id', $concept)
+        ->groupBy('date');
+
+            if($branch !== 'ALL'  && !is_null($branch)){
+            $baseQuery->where('branch', $branch);
+            }
+       }else{
+        $baseQuery = $query->selectRaw('SUM(end_balance - beg_balance) as total_sales, date')
+        ->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
+        ->groupBy('date');
 
         if($branch !== 'ALL'  && !is_null($branch)){
-            $baseQuery->where('branch', $branch);
+        $baseQuery->where('branch', $branch);
         }
+       }
+
         $results = $baseQuery->get();
 
         $data = [];

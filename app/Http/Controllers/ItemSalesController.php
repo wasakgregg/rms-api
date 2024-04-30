@@ -12,17 +12,30 @@ class ItemSalesController extends Controller
     {
         $month = $request->query('month');
         $branch = $request->query('branch');
+        $concept = $request->query('concept');
 
         $query = dr_item_sales::query();
 
         // Build the base SQL query without the branch filter
-        $baseQuery = $query->selectRaw('(SUM(net_sales) / (SELECT COUNT(date) FROM (SELECT DISTINCT(date) FROM dr_item_sales WHERE date_format(date, "%Y-%m") = ? GROUP BY date) AS sub_dr_item_sales)) AS average_sales', [$month])
-            ->whereRaw('date_format(date, "%Y-%m") = ?', [$month]);
+    if($branch != "ALL"){
 
-        // If branch is not 'ALL', add the branch filter to the base query
+        $baseQuery = $query->selectRaw('(SUM(net_sales) / (SELECT COUNT(date) FROM (SELECT DISTINCT(date) FROM dr_item_sales WHERE date_format(date, "%Y-%m") = ? GROUP BY date) AS sub_dr_item_sales)) AS average_sales', [$month])
+        ->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
+        ->where('concept_id', $concept);
+
+    // If branch is not 'ALL', add the branch filter to the base query
         if ($branch !== 'ALL' && !is_null($branch)) {
             $baseQuery->where('branch', $branch);
         }
+    }else{
+        $baseQuery = $query->selectRaw('(SUM(net_sales) / (SELECT COUNT(date) FROM (SELECT DISTINCT(date) FROM dr_item_sales WHERE date_format(date, "%Y-%m") = ? GROUP BY date) AS sub_dr_item_sales)) AS average_sales', [$month])
+        ->whereRaw('date_format(date, "%Y-%m") = ?', [$month]);
+
+    // If branch is not 'ALL', add the branch filter to the base query
+        if ($branch !== 'ALL' && !is_null($branch)) {
+            $baseQuery->where('branch', $branch);
+        }
+    }
 
         // Execute the query and retrieve the result
         $result = $baseQuery->first();
@@ -44,10 +57,25 @@ class ItemSalesController extends Controller
     {
         $month = $request->input('month');
         $branch = $request->input('branch');
+        $concept  = $request->input('concept');
 
         $query = dr_item_sales::query();
 
-        if ($branch == 'ALL' || empty($branch)) {
+        if($concept != "ALL"){
+          
+            if ($branch == 'ALL' || empty($branch)) {
+                $totalSales = $query->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
+                                    ->where('concept_id', $concept)
+                                    ->sum('net_sales');
+            } else {
+                $totalSales = $query->where('branch', $branch)
+                                    ->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
+                                    ->sum('net_sales');
+            }
+            
+        }else{
+            
+              if ($branch == 'ALL' || empty($branch)) {
             $totalSales = $query->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
                                 ->sum('net_sales');
         } else {
@@ -55,6 +83,8 @@ class ItemSalesController extends Controller
                                 ->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
                                 ->sum('net_sales');
         }
+        }
+
 
         return response()->json([
             'total_sales' => $totalSales ?? 0, // Provide a default value of 0 if $totalSales is null

@@ -14,14 +14,27 @@ class AuditController extends Controller
 {   
     $branch = $request->query('branch');
     $month = $request->query('month');
+    $concept = $request->query('concept');
 
     // Query to calculate the total sales
     $totalSalesQuery = Dr_audit::query();
+
+   if($concept != "ALL"){
     $totalSalesQuery->selectRaw('SUM(net_sales + delivery_charge + service_charge) as total_sales')
-                    ->whereRaw('date_format(date, "%Y-%m") = ?', [$month]);
+        ->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
+        ->where('concept_id', $concept);
+
     if($branch !== 'ALL' && !is_null($branch)){
-        $totalSalesQuery->where('store_name', $branch);
+    $totalSalesQuery->where('store_name', $branch);
     }
+   }else{
+    $totalSalesQuery->selectRaw('SUM(net_sales + delivery_charge + service_charge) as total_sales')
+    ->whereRaw('date_format(date, "%Y-%m") = ?', [$month]);
+        if($branch !== 'ALL' && !is_null($branch)){
+        $totalSalesQuery->where('store_name', $branch);
+        }
+
+   }
     $totalSalesResult = $totalSalesQuery->first();
 
     // Query to calculate the total number of guests
