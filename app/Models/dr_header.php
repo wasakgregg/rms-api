@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class dr_header extends Model
 {
     protected $table = 'dr_header';
-    use HasFactory;
+
+    public function itemSales()
+    {
+        return $this->hasMany(dr_item_sales::class, 'date', 'date');
+    }
 }
