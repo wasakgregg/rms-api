@@ -101,71 +101,33 @@ class ItemSalesController extends Controller
         $concept = $request->input('concept');
     
         // Perform the query using Eloquent
-     if($concept != 'ALL'){
-        if($branch == "ALL" || empty($branch)){
-            if($category == "" || empty($category)) {
-                $sql = "SELECT
-                dr_item_sales.category_code,
-                dr_category.category_desc,
-                dr_item_sales.product_code,
-                dr_item_sales.description,
-                SUM(dr_item_sales.quantity) as total_quantity,
-                SUM(dr_item_sales.net_sales) as total_net_sales
-            FROM
-                dr_item_sales
-            JOIN
-                dr_category ON dr_category.category_code = dr_item_sales.category_code
-            WHERE
-                date BETWEEN ? AND ?'
-                AND dr_item_sales.concept_id = ? 
-               
-            GROUP BY
-                dr_item_sales.category_code, dr_item_sales.product_code";
-                $params = [$startDate,$endDate, $concept];
-            }else{
-                $sql = "SELECT
-                dr_item_sales.category_code,
-                dr_category.category_desc,
-                dr_item_sales.product_code,
-                dr_item_sales.description,
-                SUM(dr_item_sales.quantity) as total_quantity,
-                SUM(dr_item_sales.net_sales) as total_net_sales
-            FROM
-                dr_item_sales
-            JOIN
-                dr_category ON dr_category.category_code = dr_item_sales.category_code
-            WHERE
-                date BETWEEN ? AND ?'
-                AND dr_item_sales.concept_id = ? 
-                AND dr_category.category_code = ? 
-            GROUP BY
-                dr_item_sales.category_code, dr_item_sales.product_code";
-                $params = [$startDate,$endDate, $concept, $category];
-            }
-        }else{
-            $sql = "SELECT
-            dr_item_sales.category_code,
-            dr_category.category_desc,
-            dr_item_sales.product_code,
-            dr_item_sales.description,
-            SUM(dr_item_sales.quantity) as total_quantity,
-            SUM(dr_item_sales.net_sales) as total_net_sales
-        FROM
-            dr_item_sales
-        JOIN
-            dr_category ON dr_category.category_code = dr_item_sales.category_code
-        WHERE
-            date BETWEEN ? AND ?'
-            AND dr_item_sales.concept_id = ? 
-           
-        GROUP BY
-            dr_item_sales.category_code, dr_item_sales.product_code";
-            $params = [$startDate,$endDate, $concept];
-        }
-     }else{ 
+        $productMix = dr_item_sales::select(
+            'dr_item_sales.category_code',
+            'dr_category.category_desc',
+            'dr_item_sales.product_code',
+            'dr_item_sales.description',
+            DB::raw('SUM(dr_item_sales.quantity) as total_quantity'),
+            DB::raw('SUM(dr_item_sales.net_sales) as total_net_sales')
+        )
+        ->join('dr_category', 'dr_category.category_code', '=', 'dr_item_sales.category_code')
+        ->whereBetween('date', [$startDate, $endDate]);
+    
+    if ($concept != 'ALL') {
+        $productMix->where('dr_item_sales.concept_id', $concept);
+    }
+    
+    if ($category != 'ALL') {
+        $productMix->where('dr_item_sales.category_code', $category);
+    }
+    
+    if ($branch != 'ALL') {
+        $productMix->where('dr_item_sales.branch', $branch);
+    }
+    
+    $productMix->groupBy('dr_item_sales.category_code', 'dr_item_sales.product_code');
+    
 
-
-     }
+     
             
             $results = $productMix->get();
 
@@ -306,5 +268,60 @@ class ItemSalesController extends Controller
     ]);
 }
     
+
+
+public function discountData(Request $request){
+
+    $branch = $request->input('branch');
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+    $concept = $request->input('concept');
+
+    $discountData = dr_item_sales::select(
+        'date',
+        DB::raw('SUM(net_sales) AS net_sales'),
+        DB::raw('SUM(senior_disc) AS senior_discount'),
+        DB::raw('SUM(pwd_disc) AS pwd_discount'),
+        DB::raw('SUM(other_disc) AS other_discount'),
+        DB::raw('SUM(open_disc) AS open_discount'),
+        DB::raw('SUM(employee_disc) AS employee_discount'),
+        DB::raw('SUM(vip_disc) AS vip_discount'),
+        DB::raw('SUM(PROMO) AS promo'),
+        DB::raw('SUM(FREE) AS free')
+    )
+    ->whereBetween('date', [$startDate, $endDate]);
+
+    if($concept != 'ALL'){
+        $discountData->where('concept_id', $concept);
+    }
+
+    if($branch != 'ALL'){
+        $discountData->where('branch', $branch);
+    }
+
+    $discountData->groupBy('date');
+
+    $results = $discountData->get();
+
+    $data = [];
+
+    foreach($results as $result){
+        $data[] = [
+            'date_formatted' => $result->date,
+            'senior_discount' => $result->senior_discount,
+            'pwd_discount' => $result->pwd_discount,
+            'other_discount' => $result->other_discount,
+            'open_discount' => $result->open_discount,
+            'employee_discount' => $result->employee_discount,
+            'vip_discount' => $result->vip_discount,
+            'promo'=> $result->promo,
+            'free' => $result->free,
+        ];
+    }
+    
+    return response()->json($data);
+}
+
+
     
 }

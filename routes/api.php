@@ -40,6 +40,7 @@ Route::get('/branch', [BranchController::class, 'branchList']);
 Route::get('/itemSales', [ItemSalesController::class,'CalculateAverageSalesPerDay']);
 Route::get('/totalSales', [ItemSalesController::class, 'calculateTotalSales']);
 Route::get('/dailysalesreport', [ItemSalesController::class, 'DailySalesReport']);
+Route:: get('/discountdata', [ItemSalesController::class, 'discountData']);
 
 
 
@@ -47,8 +48,11 @@ Route::get('/dailysalesreport', [ItemSalesController::class, 'DailySalesReport']
 Route::get('/averageTx', [HeaderController::class, 'CalculateAverageTxPerDay']);
 Route::get('/totalSalesPerDay', [HeaderController::class, 'TotalSalesPerDay']);
 
-//payment details api
 
+
+
+//payment details api
+Route::get('/paymentdata', [PaymentDetailsController::class,'paymentData']);
 Route::get('/paymentDetails', [PaymentDetailsController::class,'PaymentDetails']);
 
 

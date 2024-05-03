@@ -54,4 +54,44 @@ class PaymentDetailsController extends Controller
         }
         return response()->json($data);
     }
+
+    public function paymentData(Request $request){
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+    $branch = $request->input('branch');
+    $concept = $request->input('concept');
+
+    $paymentData = dr_payment_details::select(
+        'date',
+        'branch',
+        'pay_type',
+        'description',
+        'amount'
+    )
+    ->whereBetween('date',[$startDate, $endDate]);
+
+    if($concept != 'ALL' ){
+        $paymentData->where('concept_id', $concept);
+    }
+    
+    if($branch != 'ALL'){
+        $paymentData->where('branch', $branch);
+    }
+
+    $results = $paymentData->get();
+
+    $data=[];
+
+    foreach($results as $result){
+        $data[] = [
+            'data_formatted' =>$result->date,
+            'branch' => $result->branch,
+            'description' =>$result->description,
+            'amount' => floatval($result->amount),
+        ];
+    }
+
+    return response()->json($data);
+}
+
 }
