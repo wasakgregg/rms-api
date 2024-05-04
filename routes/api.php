@@ -5,6 +5,7 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ConceptController;
 use App\Http\Controllers\HeaderController;
+use App\Http\Controllers\HourlyController;
 use App\Http\Controllers\ItemSalesController;
 use App\Http\Controllers\PaymentDetailsController;
 use Illuminate\Http\Request;
@@ -65,3 +66,8 @@ Route::get('/productMix',[ItemSalesController::class,'ProductMix']);
 //category list
 
 Route::get('/categorylist', [CategoryController::class, 'categoryList']);
+
+
+//HOURLY
+
+Route::get('hourlysales', [HourlyController::class ,'HourlySales']);
