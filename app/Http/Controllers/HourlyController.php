@@ -10,12 +10,11 @@ class HourlyController extends Controller
 {
     //
     public function HourlySales(Request $request){
-
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
         $branch = $request->input('branch');
         $concept = $request->input('concept');
-
+    
         $hourlySales = dr_hourly::selectRaw("
             CONCAT(
                 LPAD(hour % 12, 2, '0'),
@@ -32,31 +31,30 @@ class HourlyController extends Controller
             SUM(discount_amount) AS total_discount_amount
         ")
         ->whereBetween('date', [$startDate, $endDate]);
-
-
-        if($concept != "ALL"){
-            $hourlySales->where('concept_id', $concept);
+    
+        // Apply branch filter only if branch is not "ALL"
+        if($branch !== "ALL"){
+            $hourlySales->where('branch', $branch);
         }
-
-        if($branch != "ALL"){
-           $hourlySales->where('branch', $branch);
+    
+        // Apply concept filter only if concept is not "ALL"
+        if($concept !== "ALL"){
+            $hourlySales->where('concept_name', $concept);
         }
-
-
-
+    
         $hourlySales->groupBy(DB::raw('FLOOR(hour / 1)'));
-
+    
         $results = $hourlySales->get();
-
+    
         $data = [];
-
+    
         foreach($results as $result){
             $data[] = [
                 'hour_range' => $result->hour_range,
                 'no_trans' => $result->total_no_tx,
                 'no_void' => $result->total_no_void_tx,
                 'sales_value' => number_format($result->total_sales_value, 2),
-                'discount_amount' =>number_format($result->total_discount_amount , 2)
+                'discount_amount' => number_format($result->total_discount_amount , 2)
             ];
         }
         return response()->json($data);

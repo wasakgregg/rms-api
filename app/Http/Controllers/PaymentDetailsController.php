@@ -19,7 +19,7 @@ class PaymentDetailsController extends Controller
        if($concept != "ALL"){
         $baseQuery = $query->selectRaw('description, SUM(amount) as total_amount')
         ->whereRaw('DATE_FORMAT(date, "%Y-%m") = ?', [$month])
-        ->where('concept_id', $concept)
+        ->where('concept_name', $concept)
         ->whereNotIn('description', ['Discount', 'MEM CREDIT'])
         ->groupBy('description');
     
@@ -71,7 +71,7 @@ class PaymentDetailsController extends Controller
     ->whereBetween('date',[$startDate, $endDate]);
 
     if($concept != 'ALL' ){
-        $paymentData->where('concept_id', $concept);
+        $paymentData->where('concept_name', $concept);
     }
     
     if($branch != 'ALL'){

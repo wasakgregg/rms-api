@@ -20,7 +20,7 @@ class HeaderController extends Controller
         if($concept != "ALL"){
         $baseQuery = $query->selectRaw('SUM(no_transaction) as averageTx')
         ->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
-        ->where('concept_id', $concept);
+        ->where('concept_name', $concept);
 
             if($branch !== 'ALL' && !is_null($branch)){
                 $baseQuery->where('branch', $branch);
@@ -55,7 +55,7 @@ class HeaderController extends Controller
        if($concept != "ALL"){
         $baseQuery = $query->selectRaw('SUM(end_balance - beg_balance) as total_sales, date')
         ->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
-        ->where('concept_id', $concept)
+        ->where('concept_name', $concept)
         ->groupBy('date');
 
             if($branch !== 'ALL'  && !is_null($branch)){

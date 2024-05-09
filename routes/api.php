@@ -31,9 +31,9 @@ Route::get('/conceptlist', [ConceptController::class, 'ConceptList']);
 
 Route::get('/users', [UserController::class, 'list']);
 
-
+//audit
 Route::get('/averageSalesPerCustomer',[AuditController::class, 'averageSalesPerCustomer']);
-
+Route::get('/auditreport', [AuditController::class, 'AuditReport']);
 //branch
 Route::get('/branch', [BranchController::class, 'branchList']);
 

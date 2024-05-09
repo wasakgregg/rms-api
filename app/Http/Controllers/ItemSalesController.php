@@ -22,7 +22,7 @@ class ItemSalesController extends Controller
 
         $baseQuery = $query->selectRaw('(SUM(net_sales) / (SELECT COUNT(date) FROM (SELECT DISTINCT(date) FROM dr_item_sales WHERE date_format(date, "%Y-%m") = ? GROUP BY date) AS sub_dr_item_sales)) AS average_sales', [$month])
         ->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
-        ->where('concept_id', $concept);
+        ->where('concept_name', $concept);
 
     // If branch is not 'ALL', add the branch filter to the base query
         if ($branch !== 'ALL' && !is_null($branch)) {
@@ -66,7 +66,7 @@ class ItemSalesController extends Controller
           
             if ($branch == 'ALL' || empty($branch)) {
                 $totalSales = $query->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
-                                    ->where('concept_id', $concept)
+                                    ->where('concept_name', $concept)
                                     ->sum('net_sales');
             } else {
                 $totalSales = $query->where('branch', $branch)
@@ -113,7 +113,7 @@ class ItemSalesController extends Controller
         ->whereBetween('date', [$startDate, $endDate]);
     
     if ($concept != 'ALL') {
-        $productMix->where('dr_item_sales.concept_id', $concept);
+        $productMix->where('dr_item_sales.concept_name', $concept);
     }
     
     if ($category != 'ALL') {
@@ -148,125 +148,93 @@ class ItemSalesController extends Controller
 
     public function DailySalesReport(Request $request)
     {
-    $startDate = $request->input('start_date');
-    $endDate = $request->input('end_date');
-    $branch = $request->input('branch');
-    $concept = $request->input('concept');
-
-    if($concept != "ALL"){
-
-        if($branch == "ALL" || empty($branch)){
-             $sql = "SELECT dr_header.date, dr_header.branch, dr_header.or_from, dr_header.or_to, 
-        dr_header.beg_balance, dr_header.end_balance, dr_header.no_transaction, 
-        dr_header.reg_guest, dr_header.ftime_guest, dr_header.no_void, dr_header.senior_disc, 
-        dr_header.pwd_disc, dr_header.other_disc, dr_header.open_disc, dr_header.employee_disc, 
-        dr_header.vip_disc, dr_header.promo_disc, dr_header.free_disc, dr_header.z_count, 
-        SUM(dr_item_sales.total_gross) AS total_gross, 
-        SUM(dr_item_sales.service_charge) AS service_charge, 
-        SUM(dr_item_sales.net_sales) AS net_sales
-        FROM dr_header
-        LEFT JOIN dr_item_sales ON dr_header.date = dr_item_sales.date
-        WHERE dr_header.date BETWEEN ? AND ?
-        AND dr_header.concept_id = ?
-        GROUP BY 
-        dr_header.date,
-        dr_header.branch,
-        dr_header.or_from,
-        dr_header.or_to, 
-        dr_header.beg_balance, 
-        dr_header.end_balance,
-        dr_header.no_transaction, 
-        dr_header.reg_guest,
-        dr_header.ftime_guest, 
-        dr_header.no_void, 
-        dr_header.senior_disc, 
-        dr_header.pwd_disc, 
-        dr_header.other_disc, 
-        dr_header.open_disc, 
-        dr_header.employee_disc, 
-        dr_header.vip_disc, 
-        dr_header.promo_disc, 
-        dr_header.free_disc, 
-        dr_header.z_count
-        ";
-            $params = [$startDate, $endDate, $concept]; 
-        
-
-        }else{
-            $sql = "SELECT dr_header.date, dr_header.branch, dr_header.or_from, dr_header.or_to, 
-            dr_header.beg_balance, dr_header.end_balance, dr_header.no_transaction, 
-            dr_header.reg_guest, dr_header.ftime_guest, dr_header.no_void, dr_header.senior_disc, 
-            dr_header.pwd_disc, dr_header.other_disc, dr_header.open_disc, dr_header.employee_disc, 
-            dr_header.vip_disc, dr_header.promo_disc, dr_header.free_disc, dr_header.z_count, 
-            SUM(dr_item_sales.total_gross) AS total_gross, 
-            SUM(dr_item_sales.service_charge) AS service_charge, 
-            SUM(dr_item_sales.net_sales) AS net_sales
-            FROM dr_header
-            LEFT JOIN dr_item_sales ON dr_header.date = dr_item_sales.date
-            WHERE dr_header.date BETWEEN ? AND ?
-            AND dr_header.branch = ?
-            GROUP BY
-            dr_header.date,
-            dr_header.branch,
-            dr_header.or_from,
-            dr_header.or_to, 
-            dr_header.beg_balance, 
-            dr_header.end_balance,
-            dr_header.no_transaction, 
-            dr_header.reg_guest,
-            dr_header.ftime_guest, 
-            dr_header.no_void, 
-            dr_header.senior_disc, 
-            dr_header.pwd_disc, 
-            dr_header.other_disc, 
-            dr_header.open_disc, 
-            dr_header.employee_disc, 
-            dr_header.vip_disc, 
-            dr_header.promo_disc, 
-            dr_header.free_disc, 
-            dr_header.z_count
-            ";
-            $params = [$startDate, $endDate, $branch]; 
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $branch = $request->input('branch');
+        $concept = $request->input('concept');
+    
+        // Initialize SQL query and parameters
+        $sql = "SELECT 
+                    dr_header.date, 
+                    dr_header.branch, 
+                    dr_header.or_from, 
+                    dr_header.or_to, 
+                    dr_header.beg_balance, 
+                    dr_header.end_balance, 
+                    dr_header.no_transaction, 
+                    dr_header.reg_guest, 
+                    dr_header.ftime_guest, 
+                    dr_header.no_void, 
+                    dr_header.senior_disc, 
+                    dr_header.pwd_disc, 
+                    dr_header.other_disc, 
+                    dr_header.open_disc, 
+                    dr_header.employee_disc, 
+                    dr_header.vip_disc, 
+                    dr_header.promo_disc, 
+                    dr_header.free_disc, 
+                    dr_header.z_count, 
+                    SUM(dr_item_sales.total_gross) AS total_gross, 
+                    SUM(dr_item_sales.service_charge) AS service_charge, 
+                    SUM(dr_item_sales.net_sales) AS net_sales
+                FROM 
+                    dr_header
+                LEFT JOIN 
+                    dr_item_sales ON dr_header.date = dr_item_sales.date
+                WHERE 
+                    dr_header.date BETWEEN ? AND ?";
+    
+        $params = [$startDate, $endDate];
+    
+        // Add additional conditions based on the concept and branch values
+        if ($concept != "ALL") {
+            $sql .= " AND dr_header.concept_name = ?";
+            $params[] = $concept;
         }
-
-
-    }else{
-
-        $sql = "SELECT dr_header.date, dr_header.branch, dr_header.or_from, dr_header.or_to, 
-        dr_header.beg_balance, dr_header.end_balance, dr_header.no_transaction, 
-        dr_header.reg_guest, dr_header.ftime_guest, dr_header.no_void, dr_header.senior_disc, 
-        dr_header.pwd_disc, dr_header.other_disc, dr_header.open_disc, dr_header.employee_disc, 
-        dr_header.vip_disc, dr_header.promo_disc, dr_header.free_disc, dr_header.z_count, 
-        SUM(dr_item_sales.total_gross) AS total_gross, 
-        SUM(dr_item_sales.service_charge) AS service_charge, 
-        SUM(dr_item_sales.net_sales) AS net_sales
-        FROM dr_header
-        LEFT JOIN dr_item_sales ON dr_header.date = dr_item_sales.date
-        WHERE dr_header.date BETWEEN ? AND ?";
-
-            $params = [$startDate, $endDate];
-
-            if ($branch != 'ALL') {
-                $sql .= " AND dr_header.branch = ?";
-                $params[] = $branch;
-            }
-
-            $sql .= " GROUP BY dr_header.date, dr_header.branch, dr_header.or_from, dr_header.or_to, 
-                    dr_header.beg_balance, dr_header.end_balance, dr_header.no_transaction, 
-                    dr_header.reg_guest, dr_header.ftime_guest, dr_header.no_void, 
-                    dr_header.senior_disc, dr_header.pwd_disc, dr_header.other_disc, 
-                    dr_header.open_disc, dr_header.employee_disc, dr_header.vip_disc, 
-                    dr_header.promo_disc, dr_header.free_disc, dr_header.z_count";
-
-           
-
+    
+        if ($branch != "ALL" && !empty($branch)) {
+            $sql .= " AND dr_header.branch = ?";
+            $params[] = $branch;
+        }
+    
+        // Add GROUP BY clause to the SQL query
+        $sql .= " GROUP BY 
+                    dr_header.date, 
+                    dr_header.branch, 
+                    dr_header.or_from, 
+                    dr_header.or_to, 
+                    dr_header.beg_balance, 
+                    dr_header.end_balance, 
+                    dr_header.no_transaction, 
+                    dr_header.reg_guest,
+                    dr_header.ftime_guest, 
+                    dr_header.no_void, 
+                    dr_header.senior_disc, 
+                    dr_header.pwd_disc, 
+                    dr_header.other_disc, 
+                    dr_header.open_disc, 
+                    dr_header.employee_disc, 
+                    dr_header.vip_disc, 
+                    dr_header.promo_disc, 
+                    dr_header.free_disc, 
+                    dr_header.z_count";
+    
+        // Execute the query
+        $result = DB::select($sql, $params);
+    
+        // Format numerical values to two decimal places
+        foreach ($result as $row) {
+            $row->total_gross = number_format($row->total_gross, 2);
+            $row->service_charge = number_format($row->service_charge, 2);
+            $row->net_sales = number_format($row->net_sales, 2);
+        }
+    
+        // Return response
+        return response()->json([
+            'success' => true,
+            'data' => $result
+        ]);
     }
-    $result = DB::select($sql, $params);
-    return response()->json([
-        'success' => true,
-        'data' => $result
-    ]);
-}
     
 
 
@@ -292,7 +260,7 @@ public function discountData(Request $request){
     ->whereBetween('date', [$startDate, $endDate]);
 
     if($concept != 'ALL'){
-        $discountData->where('concept_id', $concept);
+        $discountData->where('concept_name', $concept);
     }
 
     if($branch != 'ALL'){
@@ -322,6 +290,4 @@ public function discountData(Request $request){
     return response()->json($data);
 }
 
-
-    
 }
