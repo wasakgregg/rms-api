@@ -9,50 +9,40 @@ use Illuminate\Support\Facades\DB;
 
 class ItemSalesController extends Controller
 {
-    public function CalculateAverageSalesPerDay(Request $request)
+    public function calculateAverageSalesPerDay(Request $request)
     {
         $month = $request->query('month');
-        $branch = $request->query('branch');
         $concept = $request->query('concept');
-
-        $query = dr_item_sales::query();
-
-        // Build the base SQL query without the branch filter
-    if($branch != "ALL"){
-
-        $baseQuery = $query->selectRaw('(SUM(net_sales) / (SELECT COUNT(date) FROM (SELECT DISTINCT(date) FROM dr_item_sales WHERE date_format(date, "%Y-%m") = ? GROUP BY date) AS sub_dr_item_sales)) AS average_sales', [$month])
-        ->whereRaw('date_format(date, "%Y-%m") = ?', [$month])
-        ->where('concept_name', $concept);
-
-    // If branch is not 'ALL', add the branch filter to the base query
-        if ($branch !== 'ALL' && !is_null($branch)) {
-            $baseQuery->where('branch', $branch);
+        $branch = $request->query('branch');
+    
+        $query = dr_item_sales::query()->whereRaw('date_format(date, "%Y-%m") = ?', [$month]);
+    
+        // Apply concept filter if concept is not 'ALL'
+        if ($concept !== 'ALL') {
+            $query->where('concept_name', $concept);
         }
-    }else{
-        $baseQuery = $query->selectRaw('(SUM(net_sales) / (SELECT COUNT(date) FROM (SELECT DISTINCT(date) FROM dr_item_sales WHERE date_format(date, "%Y-%m") = ? GROUP BY date) AS sub_dr_item_sales)) AS average_sales', [$month])
-        ->whereRaw('date_format(date, "%Y-%m") = ?', [$month]);
-
-    // If branch is not 'ALL', add the branch filter to the base query
-        if ($branch !== 'ALL' && !is_null($branch)) {
-            $baseQuery->where('branch', $branch);
+    
+        // Apply branch filter if branch is not 'ALL'
+        if ($branch !== 'ALL') {
+            $query->where('branch', $branch);
         }
-    }
-
-        // Execute the query and retrieve the result
-        $result = $baseQuery->first();
-
+    
+        // Calculate average sales per day
+        $averageSales = $query->selectRaw('(SUM(net_sales) / COUNT(DISTINCT date)) AS average_sales')->first();
+    
         // If the result is null or average_sales is null, return 0
-        if (!$result || is_null($result->average_sales)) {
+        if (!$averageSales || is_null($averageSales->average_sales)) {
             return response()->json([
                 'average_sales' => 0
             ]);
         }
-
-        // Return the average sales
+    
+        // Return the average sales per day
         return response()->json([
-            'average_sales' => $result->average_sales
+            'average_sales' => $averageSales->average_sales
         ]);
     }
+    
 
     public function calculateTotalSales(Request $request)
     {
