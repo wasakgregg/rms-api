@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuditController;
+use App\Http\Controllers\auth\AuthController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ConceptController;
@@ -71,3 +72,10 @@ Route::get('/categorylist', [CategoryController::class, 'categoryList']);
 //HOURLY
 
 Route::get('hourlysales', [HourlyController::class ,'HourlySales']);
+
+
+
+//login
+
+Route::post('register', [AuthController::class, 'register']);
+Route::get('login', [AuthController::class, 'login']);
