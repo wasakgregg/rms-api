@@ -19,24 +19,17 @@ class AuthController extends Controller
             'password' => Hash::make($request->input('password'))
         ]);
     }
-
     public function login(Request $request)
     {
-       if(!Auth::attempt($request->only('email', 'password')))
-       {
-        return response([
-            'message' => 'invalid Credentials'
-        ], Response::HTTP_UNAUTHORIZED);
-       }
-
-       $user = Auth::user();
-       $token = $user->createToken('token')->plainTextToken;
-
-       $cookie = cookie('jwt', $token, 60 * 24);
-
-       return response([
-        'message' => 'success'
-       ])->withCookie($cookie);
-  
+        if (!Auth::attempt($request->only('email', 'password'))) {
+            return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+    
+        $user = Auth::user();
+        $token = $user->createToken('token')->plainTextToken;
+    
+        return response()->json(['user' => $user, 'token' => $token]);
     }
+    
+
 }
