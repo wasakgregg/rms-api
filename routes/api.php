@@ -40,7 +40,7 @@ Route::get('/branch', [BranchController::class, 'branchList']);
 
 //item sales controller
 Route::get('/averagessalesperday', [ItemSalesController::class,'CalculateAverageSalesPerDay']);
-Route::get('/totalSales', [ItemSalesController::class, 'calculateTotalSales']);
+Route::get('/totalSales', [ItemSalesController::class, 'calculate TotalSales']);
 Route::get('/dailysalesreport', [ItemSalesController::class, 'DailySalesReport']);
 Route:: get('/discountdata', [ItemSalesController::class, 'discountData']);
 
